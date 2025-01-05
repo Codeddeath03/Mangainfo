@@ -7,6 +7,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Update
 import com.example.manganese.database.entities.Manga
+import com.example.manganese.database.entities.MangaSummary
 
 @Dao
 interface MangaDao {
@@ -26,7 +27,12 @@ interface MangaDao {
     @Query("SELECT * FROM new_manga")
     suspend fun getAllMangas(): List<Manga>
 
-    // Add more specific queries based on your needs (e.g., by title, author, etc.)
+    @Query("SELECT id, title, main_picture_medium FROM new_manga")
+    suspend fun getMangaSummaries(): List<MangaSummary>
+
+    @Query("SELECT * FROM new_manga WHERE id = :id")
+    suspend fun getMangaEntryById(id: Int): Manga
+
     @Query("SELECT * FROM new_manga WHERE title LIKE :title")
     suspend fun getMangaEntriesByTitle(title: String): List<Manga>
 }

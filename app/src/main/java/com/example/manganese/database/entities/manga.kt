@@ -82,3 +82,11 @@ data class Manga(
     @ColumnInfo(name = "alternative_titles_synonyms")
     val alternativeTitlesSynonyms: String?
 )
+
+
+
+data class MangaSummary(
+    @ColumnInfo(name = "id") val id: Int,
+    @ColumnInfo(name = "title") val title: String,
+    @ColumnInfo(name = "main_picture_medium") val mainPictureMedium: String?
+)

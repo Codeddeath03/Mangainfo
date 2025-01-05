@@ -56,6 +56,9 @@ dependencies {
     implementation("androidx.room:room-ktx:$room_version")
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
+    val nav_version = "2.8.5"
+    implementation("androidx.navigation:navigation-compose:$nav_version")
+
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     // To use Kotlin Symbol Processing (KSP)
     ksp("androidx.room:room-compiler:$room_version")
