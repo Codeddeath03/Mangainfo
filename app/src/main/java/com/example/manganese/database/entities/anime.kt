@@ -114,3 +114,9 @@ data class Anime(
     @ColumnInfo(name = "manga_id")
     val mangaId: Int?
 )
+
+data class AnimeSummary(
+    @ColumnInfo(name = "id") val id: Int,
+    @ColumnInfo(name = "title") val title: String,
+    @ColumnInfo(name = "main_picture_medium") val mainPictureMedium: String?
+)

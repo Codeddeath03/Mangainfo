@@ -42,11 +42,12 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
 import com.example.manganese.R
+import com.example.manganese.database.entities.AnimeSummary
 import com.example.manganese.database.entities.Manga
 import com.example.manganese.database.entities.MangaSummary
 
 @Composable
-fun MangaMainScreen(mangaList: List<MangaSummary>,onMangaClick: (MangaId:Int) -> Unit) {
+fun <T>MangaMainScreen(mangaList: List<T>,onMangaClick: (MangaId:Int) -> Unit) {
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 8.dp),
@@ -71,8 +72,16 @@ fun MangaMainScreen(mangaList: List<MangaSummary>,onMangaClick: (MangaId:Int) ->
         }
 
         // Grid Section (Integrated into LazyColumn)
+
         item {
-            SectionTitle(title = "All Manga")
+            when (mangaList.firstOrNull()) {
+                is MangaSummary -> {
+                    SectionTitle(title = "All Manga")
+                }
+                is AnimeSummary -> {
+                    SectionTitle(title = "All Anime")
+                }
+            }
         }
         items(
             mangaList.chunked(3)){
@@ -82,13 +91,24 @@ fun MangaMainScreen(mangaList: List<MangaSummary>,onMangaClick: (MangaId:Int) ->
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 rowItems.forEach { manga ->
-                    MangaCard(
-                        manga = manga,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(8.dp),
-                        onMangaClick
-                    )
+                    when(manga) {
+                        is MangaSummary -> {
+                            MangaCard(manga,modifier = Modifier
+                                .weight(1f)
+                                .padding(8.dp),
+                                onMangaClick
+
+                            )
+                        }
+                        is AnimeSummary -> {
+                            AnimeCard(manga,modifier = Modifier
+                                .weight(1f)
+                                .padding(8.dp),
+                                onMangaClick
+
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -103,19 +123,32 @@ fun SectionTitle(title: String) {
 
 
 @Composable
-fun Mangarow(modifier: Modifier = Modifier, mangaList: List<MangaSummary>,onMangaClick: (MangaId:Int) -> Unit) {
+fun <T>Mangarow(modifier: Modifier = Modifier, mangaList: List<T>,onMangaClick: (MangaId:Int) -> Unit) {
     LazyRow(
         contentPadding = PaddingValues(horizontal = 8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         modifier = modifier.fillMaxWidth()
     ) {
         items(mangaList) { manga ->
-            MangaCard(manga,modifier = Modifier
-                .width(120.dp) // Smaller card width for row
-                .height(180.dp), // Smaller card height for row
-                onMangaClick
+            when(manga) {
+                is MangaSummary -> {
+                    MangaCard(manga,modifier = Modifier
+                        .width(120.dp) // Smaller card width for row
+                        .height(180.dp), // Smaller card height for row
+                        onMangaClick
 
-            )
+                    )
+                }
+                is AnimeSummary -> {
+                    AnimeCard(manga,modifier = Modifier
+                        .width(120.dp) // Smaller card width for row
+                        .height(180.dp), // Smaller card height for row
+                        onMangaClick
+
+                    )
+                }
+            }
+
         }
     }
 }
@@ -139,6 +172,73 @@ fun Mangarow(modifier: Modifier = Modifier, mangaList: List<MangaSummary>,onMang
 
 @Composable
 fun MangaCard(manga: MangaSummary,modifier: Modifier = Modifier,onMangaClick: (MangaId:Int) -> Unit) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .aspectRatio(0.7f)
+            .clickable { onMangaClick(manga.id) },
+        shape = RoundedCornerShape(8.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            val painter = rememberAsyncImagePainter(
+                model = manga.mainPictureMedium,
+                contentScale = ContentScale.Crop,
+            )
+            val state by painter.state.collectAsState()
+            when (state) {
+                is AsyncImagePainter.State.Empty,
+                is AsyncImagePainter.State.Loading -> {
+                    CircularProgressIndicator()
+                }
+
+                is AsyncImagePainter.State.Success -> {
+                    Image(
+                        painter = painter,
+                        contentDescription = manga.title,
+                        modifier = Modifier.fillMaxSize(),
+                    )
+                }
+
+                is AsyncImagePainter.State.Error -> {
+                    // Show some error UI.
+                    Image(
+
+                        painter = painterResource(id = R.drawable.no_signal),
+                        contentScale = ContentScale.Crop,
+                        contentDescription = "Error loading image",
+                        modifier = Modifier.fillMaxSize(),
+
+                        )
+                }
+            }
+
+
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .align(Alignment.BottomCenter)
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(Color.Transparent, Color.Black),
+                            startY = 300f
+                        )
+                    )
+                    .padding(8.dp)
+            ) {
+                Text(
+                    text = manga.title,
+                    color = Color.White,
+                    style = MaterialTheme.typography.bodyMedium,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun AnimeCard(manga: AnimeSummary,modifier: Modifier = Modifier,onMangaClick: (MangaId:Int) -> Unit) {
     Card(
         modifier = modifier
             .fillMaxWidth()
