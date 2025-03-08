@@ -15,3 +15,5 @@
 local.properties
 app/src/main/assets/manga.db
 app/src/main/assets/crazy_schema_manga.db
+app/google-services.json
+google-services.json

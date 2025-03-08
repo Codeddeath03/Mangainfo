@@ -3,6 +3,8 @@ package com.example.manganese.database.entities
 import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import androidx.room.TypeConverters
+import com.example.manganese.components.Converters
 
 @Entity(tableName = "new_manga")
 data class Manga(
@@ -50,7 +52,7 @@ data class Manga(
     val rank: Int?,
 
     @ColumnInfo(name = "genres")
-    val genres: String?,
+    val genres: List<String>?,
 
     @ColumnInfo(name = "authors")
     val authors: String?,

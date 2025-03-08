@@ -32,11 +32,17 @@ interface MangaDao {
     @Query("SELECT id, title, main_picture_medium FROM new_manga")
     suspend fun getMangaSummaries(): List<MangaSummary>
 
+    @Query("SELECT id, title, main_picture_medium FROM new_manga WHERE id = :id")
+    suspend fun getMangaSummarybyID(id: Int): MangaSummary
+
     @Query("SELECT * FROM new_manga WHERE id = :id")
     suspend fun getMangaEntryById(id: Int): Manga
 
     @Query("SELECT id, title, main_picture_medium FROM new_anime")
     suspend fun getAnimeSummaries(): List<AnimeSummary>
+
+    @Query("SELECT id, title, main_picture_medium FROM new_anime WHERE id = :id")
+    suspend fun getAnimeSummarybyID(id: Int): AnimeSummary
 
     @Query("SELECT * FROM new_anime WHERE id = :id")
     suspend fun getAnimeEntryById(id: Int): Anime

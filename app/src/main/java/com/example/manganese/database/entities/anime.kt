@@ -79,7 +79,7 @@ data class Anime(
     val broadcastStartTime: String?,
 
     @ColumnInfo(name = "genres")
-    val genres: String?,
+    val genres: List<String>?,
 
     @ColumnInfo(name = "studios")
     val studios: String?,

@@ -3,6 +3,7 @@ plugins {
     alias(libs.plugins.jetbrains.kotlin.android)
     alias(libs.plugins.compose.compiler)
     id("com.google.devtools.ksp")
+    alias(libs.plugins.google.gms.google.services)
 }
 
 android {
@@ -52,13 +53,16 @@ android {
 }
 
 dependencies {
+    implementation(libs.firebase.auth)
+    implementation("com.google.code.gson:gson:2.12.1")
+    implementation(libs.firebase.firestore.ktx)
     val room_version = "2.6.1"
     implementation("androidx.room:room-ktx:$room_version")
     implementation("androidx.room:room-runtime:$room_version")
     annotationProcessor("androidx.room:room-compiler:$room_version")
     val nav_version = "2.8.5"
     implementation("androidx.navigation:navigation-compose:$nav_version")
-
+    implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     // To use Kotlin Symbol Processing (KSP)
     ksp("androidx.room:room-compiler:$room_version")

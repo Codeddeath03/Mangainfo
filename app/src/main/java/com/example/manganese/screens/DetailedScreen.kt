@@ -5,6 +5,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,7 +27,6 @@ import androidx.compose.runtime.getValue
 import coil3.compose.AsyncImagePainter
 import coil3.compose.rememberAsyncImagePainter
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
@@ -42,10 +42,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.manganese.MangaDao
 import com.example.manganese.R
+import com.example.manganese.components.ReadListButton
+import com.example.manganese.components.UserViewModel
+import com.example.manganese.components.WatchlistButton
 import com.example.manganese.database.entities.Anime
 import com.example.manganese.database.entities.Manga
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
+
+
 
 @Composable
 fun ShortTopAppBar(onBackAction:()-> Unit) {
@@ -67,9 +74,11 @@ fun ShortTopAppBar(onBackAction:()-> Unit) {
 
 
 @Composable
-fun DetailScreen(Id: Int, mangaDao: MangaDao,
-                 type: String?,
-                 onBackAction:()-> Unit,
+fun DetailScreen(
+    Id: Int, mangaDao: MangaDao,
+    type: String?,
+    onBackAction: () -> Unit,
+    viewModel: UserViewModel,
 ) {
     Scaffold(
         topBar = { ShortTopAppBar { onBackAction() }}
@@ -102,14 +111,18 @@ fun DetailScreen(Id: Int, mangaDao: MangaDao,
             if (Details.value != null) {
                 when (val item = Details.value){
                     is Manga -> {
+
+                        Log.d("MangaDetailScreen","chirkoot")
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
                         ){
-                            // Manga Image Box
+
+                            //Image Box
                             Box(
                                 modifier = Modifier
-                                    .size(100.dp)
+                                    .size(height = 300.dp, width = 250.dp)
                                     .border(1.dp, Color.Gray)
                                     .padding(4.dp),
                                 contentAlignment = Alignment.Center
@@ -150,23 +163,30 @@ fun DetailScreen(Id: Int, mangaDao: MangaDao,
 
                         // Manga Title and Genre
                         Column(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
-                                text = item.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = Color.Red,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                            ){
+                                Text(
+                                    text = item.title,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    color = Color.Red,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                                ReadListButton(item.id,item.title,viewModel)
+                            }
+
 
                             Spacer(modifier = Modifier.height(8.dp))
-
                             Text(
-                                text = item.genres.toString(),
+                                text = "Genre: ${item.genres!!.joinToString(", ")}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray,
                             )
+
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -190,12 +210,13 @@ fun DetailScreen(Id: Int, mangaDao: MangaDao,
                     is Anime -> {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement =  Arrangement.Center
                         ){
                             // Anime Image Box
                             Box(
                                 modifier = Modifier
-                                    .size(100.dp)
+                                    .size(height = 300.dp, width = 250.dp)
                                     .border(1.dp, Color.Gray)
                                     .padding(4.dp),
                                 contentAlignment = Alignment.Center
@@ -236,23 +257,31 @@ fun DetailScreen(Id: Int, mangaDao: MangaDao,
 
                         // Anime Title and Genre
                         Column(
-                            modifier = Modifier.fillMaxWidth()
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Text(
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(
                                 text = item.title,
                                 style = MaterialTheme.typography.headlineSmall,
                                 color = Color.Red,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
+                                WatchlistButton(item.id,item.title,viewModel)
+                            }
+
 
                             Spacer(modifier = Modifier.height(8.dp))
 
                             Text(
-                                text = item.genres.toString(),
+                                text = "Genre: ${item.genres!!.joinToString(", ")}",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = Color.Gray,
                             )
+
                         }
 
                         Spacer(modifier = Modifier.height(24.dp))
@@ -273,17 +302,17 @@ fun DetailScreen(Id: Int, mangaDao: MangaDao,
                         }
                     }
                 }
-                Box(modifier = Modifier.clickable {onBackAction()}
-                    .padding(4.dp)
-                    .background(shape= RoundedCornerShape(12.dp),color=Color.Transparent)
-                    .fillMaxWidth(),
-                    contentAlignment = Alignment.TopStart
-                ){
-                    Icon(
-                        painter = painterResource(id=R.drawable.arrow_back),
-                        contentDescription = "Back Button"
-                    )
-                }
+//                Box(modifier = Modifier.clickable {onBackAction()}
+//                    .padding(4.dp)
+//                    .background(shape= RoundedCornerShape(12.dp),color=Color.Transparent)
+//                    .fillMaxWidth(),
+//                    contentAlignment = Alignment.TopStart
+//                ){
+//                    Icon(
+//                        painter = painterResource(id=R.drawable.arrow_back),
+//                        contentDescription = "Back Button"
+//                    )
+//                }
 
             }else {
 
@@ -311,7 +340,7 @@ fun MangaDetailScreen() {
         popularity = 5,
         numFavorites = 800000,
         rank = 1,
-        genres = "Action, Drama, Fantasy",
+        genres = listOf("Action", "Drama", "Fantasy"),
         authors = "Hajime Isayama",
         synopsis = """
         In a world where humanity is on the brink of extinction due to giant humanoid creatures known as Titans, 
@@ -344,7 +373,7 @@ fun MangaDetailScreen() {
             ){
                 Box(
                     modifier=Modifier
-                        .background (Color.Black)
+                        .background(Color.Black)
                         .fillMaxWidth(.1f)
                         .height(1.dp)
                 )
@@ -387,7 +416,7 @@ fun MangaDetailScreen() {
                 }
                 Box(
                     modifier=Modifier
-                        .background (Color.Black)
+                        .background(Color.Black)
                         .fillMaxWidth()
                         .height(1.dp)
                 )
