@@ -11,8 +11,19 @@ class Converters {
         return Gson().toJson(list)
     }
 
+
     @TypeConverter
     fun fromStringToList(string: String?): List<String>? {
-        return if (string == null) null else Gson().fromJson(string, object : TypeToken<List<String>>() {}.type)
+        if (string == null) return null
+
+        return try {
+            Gson().fromJson(
+                string.replace("'", "\""),
+                object : TypeToken<List<String>>() {}.type
+            )
+        } catch (e: Exception) {
+            null
+        }
     }
+
 }

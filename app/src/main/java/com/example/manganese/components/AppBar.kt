@@ -22,6 +22,7 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -41,17 +42,19 @@ import com.example.manganese.screens.profilePopUp
 
 
 @Composable
-fun BottomNavigation(tabBarItems: List<TabBarItem>,
-                             navController: NavHostController,viewModel: UserViewModel
+fun BottomNavigation(
+    tabBarItems: List<TabBarItem>,
+    navController: NavHostController, viewModel: UserViewModel
 ) {
+
+
 
     var selectedTabIndex by rememberSaveable {
         mutableStateOf(0)
     }
 
     val nickname by viewModel.nickname.collectAsState()
-    val watchlist by viewModel.watchlistSummaries.collectAsState()
-
+    Log.d("nickname","$nickname")
     NavigationBar {
             // looping over each tab to generate the views and navigation for each item
             tabBarItems.forEachIndexed { index, tabBarItem ->
@@ -75,11 +78,14 @@ fun BottomNavigation(tabBarItems: List<TabBarItem>,
                 )
             }
         profilePopUp("${nickname.data}", onWatchListclick = {
-            Log.d("anime click","GE fighting")
+           // Log.d("anime click","GE fighting")
             navController.navigateToSingleTop("watchlistScreen")
-        }){
-            Log.d("manga click","GE fighting")
-            navController.navigateToSingleTop("readlistScreen")
+        },
+            onReadListClick = {
+                // Log.d("manga click","GE fighting")
+                navController.navigateToSingleTop("readlistScreen")
+            }){
+            navController.navigateToSingleTop("settingsScreen")
         }
         }
 }

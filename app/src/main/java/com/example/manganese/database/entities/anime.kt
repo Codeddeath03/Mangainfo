@@ -5,13 +5,14 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
 @Entity(
-    tableName = "new_anime",
+    tableName = "anime",
     foreignKeys = [
         ForeignKey(
             entity = Manga::class,
             parentColumns = ["id"],
             childColumns = ["manga_id"],
             onDelete = ForeignKey.SET_NULL,
+            onUpdate = ForeignKey.NO_ACTION
 
             )
     ]

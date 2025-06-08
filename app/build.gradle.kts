@@ -50,9 +50,17 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
+
 }
 
 dependencies {
+    val paging_version = "3.3.6"
+
+    implementation("androidx.paging:paging-runtime:$paging_version")
+    implementation("androidx.paging:paging-compose:3.3.6")
+    implementation("androidx.room:room-paging:2.7.1")
+
     implementation(libs.firebase.auth)
     implementation("com.google.code.gson:gson:2.12.1")
     implementation(libs.firebase.firestore.ktx)
@@ -63,6 +71,8 @@ dependencies {
     val nav_version = "2.8.5"
     implementation("androidx.navigation:navigation-compose:$nav_version")
     implementation(platform("com.google.firebase:firebase-bom:33.8.0"))
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
     implementation("io.coil-kt.coil3:coil-compose:3.0.4")
     // To use Kotlin Symbol Processing (KSP)
     ksp("androidx.room:room-compiler:$room_version")

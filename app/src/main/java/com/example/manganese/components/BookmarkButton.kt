@@ -1,5 +1,6 @@
 package com.example.manganese.components
 
+import android.util.Log
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -20,19 +21,20 @@ fun WatchlistButton(
 ) {
     // Directly collect the list of AnimeSummary (no Resources wrapper)
     val watchlistSummaries by viewModel.watchlistSummaries.collectAsState()
-
+    Log.d("WatchlistUI", "Current watchlist: $watchlistSummaries")
     // Check if this anime is already in the watchlist
     val isInWatchlist = watchlistSummaries.any { it.id == animeId }
 
     // Choose correct icon
     val icon = if (isInWatchlist) {
-        painterResource(id = R.drawable.bookmark_filled)  // anime is in watchlist
+        painterResource(id = R.drawable.watchlist_check)  // anime is in watchlist
     } else {
-        painterResource(id = R.drawable.bookmark_add)  // anime is not in watchlist
+        painterResource(id = R.drawable.watchlist_add)  // anime is not in watchlist
     }
 
     IconButton(
         onClick = {
+            Log.d("watchlist button","clicked")
             if (isInWatchlist) {
                 viewModel.removeAnimeFromWatchlist(animeId)
             } else {
@@ -54,7 +56,7 @@ fun ReadListButton(
     viewModel: UserViewModel
 ) {
     val readlistSummaries by viewModel.readlistSummaries.collectAsState()
-
+    Log.d("ReadlistUI", "Current readlist: $readlistSummaries")
 
     val isInReadlist = readlistSummaries.any { it.id == mangaId }
 

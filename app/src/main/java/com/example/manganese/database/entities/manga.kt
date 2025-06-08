@@ -6,7 +6,7 @@ import androidx.room.PrimaryKey
 import androidx.room.TypeConverters
 import com.example.manganese.components.Converters
 
-@Entity(tableName = "new_manga")
+@Entity(tableName = "manga")
 data class Manga(
     @PrimaryKey
     @ColumnInfo(name = "id")

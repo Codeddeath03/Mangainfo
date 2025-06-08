@@ -9,7 +9,7 @@ import com.example.manganese.components.Converters
 import com.example.manganese.database.entities.Anime
 import com.example.manganese.database.entities.Manga
 
-@Database(entities = [Manga::class, Anime::class], version = 1, exportSchema = false)
+@Database(entities = [Manga::class, Anime::class], version = 1, exportSchema = true)
 @TypeConverters(Converters::class)
 abstract class MangaDatabase : RoomDatabase() {
 

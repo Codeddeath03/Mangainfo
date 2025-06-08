@@ -48,7 +48,7 @@ import com.example.manganese.components.UserViewModel
 
 
 @Composable
-fun profilePopUp(nickname: String,onWatchListclick:()-> Unit,onReadListClick: () -> Unit) {//, onSettingsClick: () -> Unit
+fun profilePopUp(nickname: String,onWatchListclick:()-> Unit,onReadListClick: () -> Unit,onSettingsClick: () -> Unit) {
     var expanded by remember { mutableStateOf(false) }
 
     Box(
@@ -79,7 +79,7 @@ fun profilePopUp(nickname: String,onWatchListclick:()-> Unit,onReadListClick: ()
             HorizontalDivider()
             DropdownMenuItem(
                 text = { Text("Readlist") },
-                leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
+                leadingIcon = { Icon(painterResource(R.drawable.readlist) , contentDescription = null) },
                 onClick = {
                     expanded = false
                     onReadListClick()
@@ -89,7 +89,9 @@ fun profilePopUp(nickname: String,onWatchListclick:()-> Unit,onReadListClick: ()
             DropdownMenuItem(
                 text = { Text("Settings") },
                 leadingIcon = { Icon(Icons.Outlined.Settings, contentDescription = null) },
-                onClick = { /* Do something... */ }
+                onClick = {
+                    expanded=false
+                    onSettingsClick()}
             )
 
 /*
@@ -168,6 +170,6 @@ fun ProfileDropdownMenu(onDismiss: () -> Unit) {
 @Preview
 @Composable
 private fun prevProfileScreen() {
-    profilePopUp("peeko-park", onWatchListclick = {}, onReadListClick = {})
+    profilePopUp("peeko-park", onWatchListclick = {}, onReadListClick = {}, onSettingsClick = {})
 
 }
