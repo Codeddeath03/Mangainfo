@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -21,6 +20,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,7 +39,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.navigation.navigation
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.example.manganese.database.entities.MangaSummary
@@ -50,11 +49,11 @@ import com.example.manganese.components.SearchBar
 import com.example.manganese.components.UserViewModel
 import com.example.manganese.components.UserViewModelFactory
 import com.example.manganese.database.DbViewModelFactory
-import com.example.manganese.database.Resources
 import com.example.manganese.database.dbRepository
 import com.example.manganese.database.dbViewModel
 import com.example.manganese.database.entities.AnimeSummary
 import com.example.manganese.database.firedb
+import com.example.manganese.screens.GridView
 import com.example.manganese.screens.LoginScreen
 import com.example.manganese.screens.SettingsScreen
 import com.example.manganese.screens.SignUpScreen
@@ -140,7 +139,7 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 )
                 {
-                    App(mangaList,animeList,mangaDao,navController,auth,userViewModel)
+                    App(mangaList,animeList,mangaDao,navController,auth,userViewModel,dbViewModel)
                 }
             }
         }
@@ -156,11 +155,13 @@ fun App(
     mangaDao: MangaDao,
     navController: NavHostController,
     auth: FirebaseAuth,
-    viewModel: UserViewModel
+    viewModel: UserViewModel,
+    dbViewModel: dbViewModel
 ) {
-    // fix signup logic where the user registration is handled by the viewmodel also it register the new user to firestore
-    //fix mangarow for the items part
-
+    var searchQuery by rememberSaveable { mutableStateOf("") }
+    val searchState by dbViewModel.searchState.collectAsState()
+    val mlist = dbViewModel.mlist.collectAsLazyPagingItems()
+    val alist =  dbViewModel.alist.collectAsLazyPagingItems()
 
     // search function separately, which will change the search state. if query typed state == true else false
     //creation of variable mlist and alist for mangalist and animelist, which will change based on the state above. if true > fetchs the filtered results and stores in mlist/alist else normal mangalist / animelist
@@ -168,8 +169,11 @@ fun App(
     // so do not have to change anything for mangamainscreen and animemainscreen
 
     var isLoading by remember { mutableStateOf(false) }
-
-
+    var selectedTabIndex by rememberSaveable {
+        mutableStateOf(0)
+    }
+    Log.d("MangaListScreen", "${mangaList.itemCount}")
+    Log.d("MangaListScreen", "${animeList.itemCount}")
     Log.d("MainActivity", "App launched")
     val context = LocalContext.current
     val isLoggedIn = viewModel.hasUser
@@ -187,13 +191,25 @@ fun App(
     Scaffold(
         topBar = {
             val currentRoute = currentRoute(navController)
-            if (currentRoute?.startsWith("detailScreen") != true && currentRoute?.startsWith("LoginScreen") != true &&
-                currentRoute?.startsWith("SignUpScreen") != true
+            if (currentRoute?.startsWith("mangaMainScreen") == true || currentRoute?.startsWith("animeMainScreen") == true
             )  {
             SearchBar(
-                query = "",
-                onQueryChange = {},
-                onClearQuery = {}
+                query = searchQuery,
+                onQueryChange = {newQuery ->
+                    dbViewModel._searchState.value = true
+                    searchQuery = newQuery
+                    if (selectedTabIndex == 0){
+                        dbViewModel.Mangasearch(newQuery)
+                    }
+                    else{
+                        dbViewModel.Animesearch(newQuery)
+                    }
+
+                    },
+                onClearQuery = {
+                    searchQuery = ""
+                    dbViewModel._searchState.value = false
+                }
             )}
         },
         bottomBar = {
@@ -201,7 +217,10 @@ fun App(
             if (currentRoute?.startsWith("detailScreen") != true && currentRoute?.startsWith("LoginScreen") != true &&
                 currentRoute?.startsWith("SignUpScreen") != true
                 )  {
-            BottomNavigation(tabBarItems, navController,viewModel) }
+
+            BottomNavigation(tabBarItems, selectedTabIndex,onTabSelected={
+                selectedTabIndex = it
+            },navController,viewModel) }
         }
     ){  innerPadding ->
         NavHost(navController= navController,
@@ -257,7 +276,24 @@ fun App(
             }
             navigation(startDestination = "mangaMainScreen", route = "main_app"){
                 composable("mangaMainScreen") {
-                    Log.d("MangaListScreen", "${mangaList.itemCount}")
+                    if (searchState == true && selectedTabIndex==0){
+                        if (mlist.itemCount > 0) {
+                            GridView(mlist){
+                                //do nothing fn
+                                Log.d("MangaListScreen", "Manga ID: $it")
+                                navController.navigate("detailScreen/manga/$it")
+                            }
+                        }
+                        else{
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize(1F)
+                            ){
+                                Text(text = "Not found wat...")
+                            }
+                        }
+                    }
+                    else{
                     if (mangaList.itemCount > 0) {
                         MangaMainScreen(mangaList){
                             //do nothing fn
@@ -273,23 +309,44 @@ fun App(
                             Text(text = "Loading.....")
                         }
                     }
+                    }
                 }
                 composable("animeMainScreen") {
-                    if (animeList.itemCount > 0) {
-                        MangaMainScreen(animeList){
-                            //do nothing fn
-                            Log.d("AnimeListScreen", "Anime ID: $it")
-                            navController.navigate("detailScreen/anime/$it")
+                    if (searchState == true && selectedTabIndex==1){
+                        if (alist.itemCount > 0) {
+                            GridView(alist){
+                                //do nothing fn
+                                Log.d("AnimeListScreen", "Anime ID: $it")
+                                navController.navigate("detailScreen/anime/$it")
+                            }
+                        }
+                        else{
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize(1F)
+                            ){
+                                Text(text = "Not found wat...")
+                            }
                         }
                     }
                     else{
-                        Box(
-                            contentAlignment = Alignment.Center,
-                            modifier = Modifier.fillMaxSize(1F)
-                        ){
-                            Text(text = "Loading.....")
+                        if (animeList.itemCount > 0) {
+                            MangaMainScreen(animeList){
+                                //do nothing fn
+                                Log.d("AnimeListScreen", "Anime ID: $it")
+                                navController.navigate("detailScreen/anime/$it")
+                            }
+                        }
+                        else{
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier.fillMaxSize(1F)
+                            ){
+                                Text(text = "Loading.....")
+                            }
                         }
                     }
+
                 }
             }
 

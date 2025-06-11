@@ -168,8 +168,8 @@ fun <T : Any>MangaMainScreen(mangaList: LazyPagingItems<T>, onMangaClick: (Manga
             SectionTitle(title = "Trending")
         }
         item {
-            //  Mangarow(modifier = Modifier, mangaList,
-            //     onMangaClick)
+              Mangarow(modifier = Modifier, mangaList,
+                 onMangaClick)
         }
 
         // Recommendation Section
@@ -177,15 +177,15 @@ fun <T : Any>MangaMainScreen(mangaList: LazyPagingItems<T>, onMangaClick: (Manga
             SectionTitle(title = "Recommendation")
         }
         item {
-            //    Mangarow(modifier = Modifier, mangaList,
-            //     onMangaClick)
+                Mangarow(modifier = Modifier, mangaList,
+                 onMangaClick)
         }
 
         // Grid Section (Integrated into LazyColumn)
 
 
         item {
-            when (val firstItem = mangaList[0]) {
+            when (mangaList[0]) {
                 is MangaSummary -> {
                     SectionTitle(title = "All Manga")
                 }
@@ -196,55 +196,52 @@ fun <T : Any>MangaMainScreen(mangaList: LazyPagingItems<T>, onMangaClick: (Manga
             }
         }
         item{
-            LazyVerticalGrid(columns = GridCells.Fixed(3),
-            modifier = Modifier.fillMaxWidth().heightIn(max = 2000.dp), // adjust height
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-            content = {
-                items(
-                    count = mangaList.itemCount,
-                    key = mangaList.itemKey { it.toString() },
-                    contentType = mangaList.itemContentType { "MyPagingItems" }
-                ) { index ->
-                    val item = mangaList[index]
-                    when(item) {
-                        is MangaSummary -> {
-                            MangaCard(item,modifier = Modifier
-                                .padding(8.dp),
-                                onMangaClick
-
-                            )
-                        }
-                        is AnimeSummary -> {
-                            AnimeCard(item,modifier = Modifier
-                                .padding(8.dp),
-                                onMangaClick
-
-                            )
-                        }
-                    }
-                }
-                mangaList.apply {
-                    when {
-                        loadState.append is LoadState.Loading -> {
-                            item { CircularProgressIndicator() }
-                        }
-                    }
-                }
-
-            }
-
-        )
+        GridView(mangaList,onMangaClick)
         }
 
-
-
-
-
-
-
-
     }
+}
+
+@Composable
+fun <T : Any>GridView(mangaList: LazyPagingItems<T>,onMangaClick: (MangaId: Int) -> Unit) {
+    LazyVerticalGrid(columns = GridCells.Fixed(3),
+        modifier = Modifier.fillMaxWidth().heightIn(max = 2000.dp), // adjust height
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        content = {
+            items(
+                count = mangaList.itemCount,
+                key = mangaList.itemKey { it.toString() },
+                contentType = mangaList.itemContentType { "MyPagingItems" }
+            ) { index ->
+                val item = mangaList[index]
+                when(item) {
+                    is MangaSummary -> {
+                        MangaCard(item,modifier = Modifier
+                            .padding(8.dp),
+                            onMangaClick
+
+                        )
+                    }
+                    is AnimeSummary -> {
+                        AnimeCard(item,modifier = Modifier
+                            .padding(8.dp),
+                            onMangaClick
+
+                        )
+                    }
+                }
+            }
+            mangaList.apply {
+                when {
+                    loadState.append is LoadState.Loading -> {
+                        item { CircularProgressIndicator() }
+                    }
+                }
+            }
+
+        })
+
 }
 
 @Composable
@@ -261,7 +258,7 @@ fun <T : Any>Mangarow(modifier: Modifier = Modifier, mangaList: LazyPagingItems<
         modifier = modifier.fillMaxWidth()
     ) {
         items(count= mangaList.itemCount,
-            key=mangaList.itemKey { it },
+            key=mangaList.itemKey { it.toString() },
             contentType =  mangaList.itemContentType { "MyPagingItems" }){
                 index ->
             val manga = mangaList[index]

@@ -58,9 +58,9 @@ interface MangaDao {
     @Query("SELECT * FROM manga WHERE title LIKE :title")
     suspend fun getMangaEntriesByTitle(title: String): List<Manga>
 
-    @Query("SELECT id, title, main_picture_medium FROM manga WHERE title LIKE :title")
+    @Query("SELECT id, title, main_picture_medium FROM manga WHERE title  LIKE '%' || :title || '%'")
     fun searchMangaEntriesByTitle(title: String): PagingSource<Int, MangaSummary>
 
-    @Query("SELECT id, title, main_picture_medium FROM anime WHERE title LIKE :title")
+    @Query("SELECT id, title, main_picture_medium FROM anime WHERE title  LIKE '%' || :title || '%'")
     fun searchAnimeEntriesByTitle(title: String): PagingSource<Int, AnimeSummary>
 }
