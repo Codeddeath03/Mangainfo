@@ -41,6 +41,8 @@ import androidx.navigation.navArgument
 import androidx.navigation.navigation
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import com.example.manganese.api.RetrofitHelper
+import com.example.manganese.api.bkendService
 import com.example.manganese.database.entities.MangaSummary
 import com.example.manganese.screens.DetailScreen
 import com.example.manganese.screens.MangaMainScreen
@@ -77,14 +79,14 @@ data class TabBarItem(
 // implement login/register screen
 // only logged in users are allowed to view the screens
 // implement search bar
-// implement filter
+// implement filter = ON HOLD
 // implement theme switch
 // implement favourites/liked anime&manga (a button for this on detailed screen as well as on main screen) //when the detailed screen view is gone we then add anime/manga to database call and on mainscreen we maintain list.
 //           with this need to implement a new-user page where they can select their top 6 genres,anime's,manga's
 //           pass this to recommendation model and then get the recommended anime/manga
 // implement profile drawer (basically third icon/option in bottom nav)
 // then start with backend for connecting recommendation model to this app
-// learn retrofit and necessary things for iteracting with backend
+// learn retrofit and necessary things for interacting with backend
 // implement trending with mal api
 
 //ctrl + shift + alt shortcut for multiple cursor multi lines
@@ -115,15 +117,16 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             val mangaDao = MangaDatabase.getDatabase(this).mangaDao()
-            val dbRepo = dbRepository(mangaDao)  // Replace this with your actual instance
+            val bkendService = RetrofitHelper.getInstance().create(bkendService::class.java)
+            val dbRepo = dbRepository(mangaDao,bkendService)  // Replace this with your actual instance
             val dbViewModelFactory = DbViewModelFactory(dbRepo)
-
             val dbViewModel = ViewModelProvider(this, dbViewModelFactory).get(dbViewModel::class.java)
             val fireDB = firedb()
             val userViewModelFactory = UserViewModelFactory(fireDB,mangaDao)
-
             val userViewModel = ViewModelProvider(this, userViewModelFactory).get(UserViewModel::class.java)
-
+//            dbViewModel.animes.observe(this,{
+//                Log.d("TrendingAnime",it.data.toString())
+//            })
 
 
            // var mangaList by remember { mutableStateOf<List<MangaSummary>>(emptyList()) }
@@ -162,7 +165,8 @@ fun App(
     val searchState by dbViewModel.searchState.collectAsState()
     val mlist = dbViewModel.mlist.collectAsLazyPagingItems()
     val alist =  dbViewModel.alist.collectAsLazyPagingItems()
-
+    val trend_anime = dbViewModel.animes.collectAsState()
+    val trend_manga = dbViewModel.manga.collectAsState()
     // search function separately, which will change the search state. if query typed state == true else false
     //creation of variable mlist and alist for mangalist and animelist, which will change based on the state above. if true > fetchs the filtered results and stores in mlist/alist else normal mangalist / animelist
     //in this function we collect that state from viewmodel, if true we change mlist/alist accordingly
@@ -196,7 +200,7 @@ fun App(
             SearchBar(
                 query = searchQuery,
                 onQueryChange = {newQuery ->
-                    dbViewModel._searchState.value = true
+                    dbViewModel.updateSearchQuery(newQuery)
                     searchQuery = newQuery
                     if (selectedTabIndex == 0){
                         dbViewModel.Mangasearch(newQuery)
@@ -208,7 +212,7 @@ fun App(
                     },
                 onClearQuery = {
                     searchQuery = ""
-                    dbViewModel._searchState.value = false
+                    dbViewModel.updateSearchQuery(searchQuery)
                 }
             )}
         },
@@ -295,7 +299,7 @@ fun App(
                     }
                     else{
                     if (mangaList.itemCount > 0) {
-                        MangaMainScreen(mangaList){
+                        MangaMainScreen(mangaList, trendingList = trend_manga){
                             //do nothing fn
                             Log.d("MangaListScreen", "Manga ID: $it")
                             navController.navigate("detailScreen/manga/$it")
@@ -331,7 +335,7 @@ fun App(
                     }
                     else{
                         if (animeList.itemCount > 0) {
-                            MangaMainScreen(animeList){
+                            MangaMainScreen(animeList, trendingList = trend_anime){
                                 //do nothing fn
                                 Log.d("AnimeListScreen", "Anime ID: $it")
                                 navController.navigate("detailScreen/anime/$it")

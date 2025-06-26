@@ -121,3 +121,10 @@ data class AnimeSummary(
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "main_picture_medium") val mainPictureMedium: String?
 )
+fun Anime.toSummary(): AnimeSummary{
+    return AnimeSummary(
+        id = this.id,
+        title = this.title,
+        mainPictureMedium = this.mainPictureMedium
+    )
+}

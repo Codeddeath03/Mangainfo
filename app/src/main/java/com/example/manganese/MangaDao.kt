@@ -18,6 +18,15 @@ interface MangaDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun insertMangaEntry(mangaEntry: Manga)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAnimeEntry(animeEntry: Anime)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertMangaList(mangaList: List<Manga>)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertAnimeList(animeList: List<Anime>)
+
     @Delete
     suspend fun deleteMangaEntry(mangaEntry: Manga)
 

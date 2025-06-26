@@ -1,13 +1,18 @@
 package com.example.manganese.database
 
+import androidx.lifecycle.LiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import com.example.manganese.database.entities.Anime
 import com.example.manganese.database.entities.AnimeSummary
+import com.example.manganese.database.entities.Manga
 import com.example.manganese.database.entities.MangaSummary
+import com.example.manganese.database.entities.animeX
+import com.example.manganese.database.entities.mangaX
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -16,10 +21,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 
 class dbViewModel(private val dbRepo: dbRepository): ViewModel() {
+    val  animes: StateFlow<List<AnimeSummary>>
+        get() = dbRepo.animes
+    val manga: StateFlow<List<MangaSummary>>
+        get() = dbRepo.manga
 
-    val _searchState = MutableStateFlow(false)
+    private val _searchState = MutableStateFlow(false)
     val searchState = _searchState.asStateFlow()
-
+    fun updateSearchQuery(query: String) {
+        _searchState.value = query.isNotEmpty()
+    }
     private val _mlist = MutableStateFlow<PagingData<MangaSummary>>(PagingData.empty())
     val mlist = _mlist.asStateFlow()
 
@@ -56,7 +67,12 @@ class dbViewModel(private val dbRepo: dbRepository): ViewModel() {
         }
 
     }
-
+    init {
+        viewModelScope.launch {
+            dbRepo.getTrendingAnimes()
+            dbRepo.getTrendingMangas()
+        }
+    }
 
 
 }

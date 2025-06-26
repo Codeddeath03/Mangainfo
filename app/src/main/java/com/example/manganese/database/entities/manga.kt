@@ -92,3 +92,10 @@ data class MangaSummary(
     @ColumnInfo(name = "title") val title: String,
     @ColumnInfo(name = "main_picture_medium") val mainPictureMedium: String?
 )
+fun Manga.toSummary(): MangaSummary{
+    return MangaSummary(
+        id = this.id,
+        title = this.title,
+        mainPictureMedium = this.mainPictureMedium
+    )
+}

@@ -55,6 +55,9 @@ android {
 }
 
 dependencies {
+
+    implementation("com.squareup.retrofit2:retrofit:3.0.0")
+    implementation("com.squareup.retrofit2:converter-gson:3.0.0")
     val paging_version = "3.3.6"
 
     implementation("androidx.paging:paging-runtime:$paging_version")
