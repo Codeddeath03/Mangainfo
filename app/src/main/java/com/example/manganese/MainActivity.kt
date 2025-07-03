@@ -51,10 +51,10 @@ import com.example.manganese.components.SearchBar
 import com.example.manganese.components.UserViewModel
 import com.example.manganese.components.UserViewModelFactory
 import com.example.manganese.database.DbViewModelFactory
+import com.example.manganese.database.FireDBRepository
 import com.example.manganese.database.dbRepository
 import com.example.manganese.database.dbViewModel
 import com.example.manganese.database.entities.AnimeSummary
-import com.example.manganese.database.firedb
 import com.example.manganese.screens.GridView
 import com.example.manganese.screens.LoginScreen
 import com.example.manganese.screens.SettingsScreen
@@ -121,8 +121,8 @@ class MainActivity : ComponentActivity() {
             val dbRepo = dbRepository(mangaDao,bkendService)  // Replace this with your actual instance
             val dbViewModelFactory = DbViewModelFactory(dbRepo)
             val dbViewModel = ViewModelProvider(this, dbViewModelFactory).get(dbViewModel::class.java)
-            val fireDB = firedb()
-            val userViewModelFactory = UserViewModelFactory(fireDB,mangaDao)
+            val fireDB = FireDBRepository(mangaDao)
+            val userViewModelFactory = UserViewModelFactory(fireDB,mangaDao,dbRepo)
             val userViewModel = ViewModelProvider(this, userViewModelFactory).get(UserViewModel::class.java)
 //            dbViewModel.animes.observe(this,{
 //                Log.d("TrendingAnime",it.data.toString())
@@ -176,6 +176,7 @@ fun App(
     var selectedTabIndex by rememberSaveable {
         mutableStateOf(0)
     }
+    val animeRecommendation = viewModel.animeRecommendation.collectAsState()
     Log.d("MangaListScreen", "${mangaList.itemCount}")
     Log.d("MangaListScreen", "${animeList.itemCount}")
     Log.d("MainActivity", "App launched")
@@ -298,8 +299,8 @@ fun App(
                         }
                     }
                     else{
-                    if (mangaList.itemCount > 0) {
-                        MangaMainScreen(mangaList, trendingList = trend_manga){
+                    if (mangaList.itemCount > 0 ) {
+                        MangaMainScreen(mangaList, trendingList = trend_manga, null){
                             //do nothing fn
                             Log.d("MangaListScreen", "Manga ID: $it")
                             navController.navigate("detailScreen/manga/$it")
@@ -334,8 +335,8 @@ fun App(
                         }
                     }
                     else{
-                        if (animeList.itemCount > 0) {
-                            MangaMainScreen(animeList, trendingList = trend_anime){
+                        if (animeList.itemCount > 0 ) {
+                            MangaMainScreen(animeList, trendingList = trend_anime,animeRecommendation){
                                 //do nothing fn
                                 Log.d("AnimeListScreen", "Anime ID: $it")
                                 navController.navigate("detailScreen/anime/$it")

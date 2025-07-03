@@ -1,5 +1,6 @@
 package com.example.manganese.screens
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -149,7 +150,7 @@ import com.example.manganese.database.entities.toSummary
 
 @Composable
 fun <T : Any>MangaMainScreen(
-    mangaList: LazyPagingItems<T>, trendingList: State<List<T>>,
+    mangaList: LazyPagingItems<T>, trendingList: State<List<T>>,recommendation: State<List<T>>?,
     onMangaClick: (MangaId:Int) -> Unit) {
     val context = LocalContext.current
     LaunchedEffect(key1=mangaList.loadState) {
@@ -164,47 +165,83 @@ fun <T : Any>MangaMainScreen(
         verticalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         // Trending Section
-        item {
-            SectionTitle(title = "Trending")
-        }
-        item {
-            LazyRow(
-                contentPadding = PaddingValues(horizontal = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                items(trendingList.value) { item ->
-                    when(item){
-                        is MangaSummary -> MangaCard(
-                            manga= item,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(180.dp),
-                            onMangaClick = { onMangaClick(item.id) }
-                        )
-                        is AnimeSummary -> AnimeCard(
-                            manga= item,
-                            modifier = Modifier
-                                .width(120.dp)
-                                .height(180.dp),
-                            onMangaClick = { onMangaClick(item.id) }
-                        )
+        if (trendingList.value.isNotEmpty()){
+            item {
+                SectionTitle(title = "Trending")
+            }
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(trendingList.value) { item ->
+                        // Log.d("haha","$item")
+                        when(item){
+                            is MangaSummary -> MangaCard(
+                                manga= item,
+                                modifier = Modifier
+                                    .width(120.dp)
+                                    .height(180.dp),
+                                onMangaClick = { onMangaClick(item.id) }
+                            )
+                            is AnimeSummary -> AnimeCard(
+                                manga= item,
+                                modifier = Modifier
+                                    .width(120.dp)
+                                    .height(180.dp),
+                                onMangaClick = { onMangaClick(item.id) }
+                            )
+                        }
+
                     }
 
+
                 }
+            }
+        }
+       // Log.d("Recommendation value for anime:","$recommendation")
+        // Recommendation Section
+        if (recommendation != null  && recommendation.value.isNotEmpty()){
+            item {
+                SectionTitle(title = "Recommendation")
+            }
+            item {
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    items(recommendation.value) { item ->
+                            // Log.d("haha","$item")
+                            when(item){
+                                is MangaSummary -> MangaCard(
+                                    manga= item,
+                                    modifier = Modifier
+                                        .width(120.dp)
+                                        .height(180.dp),
+                                    onMangaClick = { onMangaClick(item.id) }
+                                )
+                                is AnimeSummary -> AnimeCard(
+                                    manga= item,
+                                    modifier = Modifier
+                                        .width(120.dp)
+                                        .height(180.dp),
+                                    onMangaClick = { onMangaClick(item.id) }
+                                )
+                            }
+
+                        }
 
 
+
+
+
+                }
             }
         }
 
-        // Recommendation Section
-        item {
-            SectionTitle(title = "Recommendation")
-        }
-        item {
-                Mangarow(modifier = Modifier, mangaList,
-                 onMangaClick)
-        }
+
 
         // Grid Section
 
