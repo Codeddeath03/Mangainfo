@@ -25,6 +25,10 @@ class dbViewModel(private val dbRepo: dbRepository): ViewModel() {
         get() = dbRepo.animes
     val manga: StateFlow<List<MangaSummary>>
         get() = dbRepo.manga
+    private val _animeDetail = MutableStateFlow<Anime?>(null)
+    val animeDetail: StateFlow<Anime?> = _animeDetail
+    private val _mangaDetail = MutableStateFlow<Manga?>(null)
+    val mangaDetail: StateFlow<Manga?> = _mangaDetail
 
     private val _searchState = MutableStateFlow(false)
     val searchState = _searchState.asStateFlow()
@@ -45,6 +49,8 @@ class dbViewModel(private val dbRepo: dbRepository): ViewModel() {
         dbRepo.loadallAnimesPaged()
     }.flow.cachedIn(viewModelScope)
 
+    fun setAnimeDetailnull() {_animeDetail.value = null}
+    fun setMangaDetailnull() {_mangaDetail.value = null}
     fun Mangasearch(query: String){
         viewModelScope.launch{
             Pager(PagingConfig(pageSize = 20)) {
@@ -65,8 +71,20 @@ class dbViewModel(private val dbRepo: dbRepository): ViewModel() {
                 _alist.value = pagingData
             }
         }
-
     }
+    fun detailedAnimeSearch(id:Int){
+        viewModelScope.launch {
+           val anime = dbRepo.detailedAnimeSearch(id)
+            _animeDetail.value = anime
+        }
+    }
+    fun detailedMangaSearch(id:Int){
+        viewModelScope.launch {
+            val manga = dbRepo.detailedMangaSearch(id)
+            _mangaDetail.value = manga
+        }
+    }
+
     init {
         viewModelScope.launch {
             dbRepo.getTrendingAnimes()

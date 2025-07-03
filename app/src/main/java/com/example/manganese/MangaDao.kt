@@ -46,7 +46,7 @@ interface MangaDao {
     fun getallMangaSummariesPaged(): PagingSource<Int, MangaSummary>
 
     @Query("SELECT id, title, main_picture_medium FROM manga WHERE id = :id")
-    suspend fun getMangaSummarybyID(id: Int): MangaSummary
+    suspend fun getMangaSummarybyID(id: Int): MangaSummary?
 
     @Query("SELECT * FROM manga WHERE id = :id")
     suspend fun getMangaEntryById(id: Int): Manga
@@ -64,6 +64,9 @@ interface MangaDao {
     @Query("SELECT * FROM anime WHERE id = :id")
     suspend fun getAnimeEntryById(id: Int): Anime
 
+    @Query("SELECT * FROM anime WHERE id = :id")
+    suspend fun getAnimeEntriesById(id: Int): List<AnimeSummary>
+
     @Query("SELECT * FROM manga WHERE title LIKE :title")
     suspend fun getMangaEntriesByTitle(title: String): List<Manga>
 
@@ -72,4 +75,7 @@ interface MangaDao {
 
     @Query("SELECT id, title, main_picture_medium FROM anime WHERE title  LIKE '%' || :title || '%'")
     fun searchAnimeEntriesByTitle(title: String): PagingSource<Int, AnimeSummary>
+
+    @Query("SELECT id, title, main_picture_medium FROM anime WHERE id IN (:ids)")
+    suspend fun getAnimeSummariesByIds(ids: List<Int>): List<AnimeSummary>
 }

@@ -3,19 +3,22 @@ package com.example.manganese.components
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.manganese.MangaDao
+import com.example.manganese.database.FireDBRepository
 import com.example.manganese.database.Resources
+import com.example.manganese.database.dbRepository
 import com.example.manganese.database.entities.AnimeSummary
 import com.example.manganese.database.entities.MangaSummary
-import com.example.manganese.database.firedb
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
-class UserViewModel(private val fireDB: firedb,private val mangaDao: MangaDao) : ViewModel() {
+class UserViewModel(private val fireDB: FireDBRepository, private val mangaDao: MangaDao,private val dbRepo: dbRepository) : ViewModel() {
+
+    val animeRecommendation: StateFlow<List<AnimeSummary>>
+        get() = dbRepo.animeRecom
     val hasUser: Boolean
         get()= fireDB.hasUser()
     private val _nickname = MutableStateFlow<Resources<String>>(Resources.Loading())
@@ -46,7 +49,7 @@ class UserViewModel(private val fireDB: firedb,private val mangaDao: MangaDao) :
         }
     }
     private fun observeUserLists() {
-        fetchWatchlist(mangaDao)
+        fetchWatchlist()
        fetchReadlist(mangaDao)
     }
 
@@ -62,18 +65,19 @@ class UserViewModel(private val fireDB: firedb,private val mangaDao: MangaDao) :
 //            fireDB.getUserWatchlist().collect { _watchlist.value = it }
 //        }
 //    }
-    fun fetchWatchlist(mangaDao: MangaDao) {
+    fun fetchWatchlist() {
         viewModelScope.launch {
             fireDB.getUserWatchlist().collect { resource ->
                 Log.d("WatchlistCollector", "Received: $resource")
                 if (resource is Resources.Success) {
-                    // Convert list of anime IDs into AnimeSummary list
-                    val animeSummaries = resource.data?.mapNotNull { animeId ->
-                        mangaDao.getAnimeSummarybyID(animeId) // This should return AnimeSummary?
-                    } ?: emptyList()
-
+                   // val animeSummaries = resource.data ?: emptyList()
                     // Set the result into the MutableStateFlow
-                    _watchlistSummaries.value = animeSummaries
+                    _watchlistSummaries.value = resource.data ?: emptyList()
+                    if (_watchlistSummaries.value.isNotEmpty()){
+                        dbRepo.getRecommendationAnime( _watchlistSummaries.value.map { it.title })
+                    }
+
+
                 } else {
                     Log.d("Watchlist", "failed")
                     _watchlistSummaries.value = emptyList() // Set empty if failed, you can modify this behavior
@@ -81,21 +85,23 @@ class UserViewModel(private val fireDB: firedb,private val mangaDao: MangaDao) :
             }
         }
     }
+
+
     fun fetchReadlist(mangaDao: MangaDao) {
         viewModelScope.launch {
             fireDB.getUserReadlist().collect { resource ->
                 Log.d("ReadlistCollector", "Received: $resource")
                 if (resource is Resources.Success) {
-                    // Convert list of anime IDs into AnimeSummary list
+
                     val mangaSummaries = resource.data?.mapNotNull { mangaId ->
-                        mangaDao.getMangaSummarybyID(mangaId) // This should return AnimeSummary?
+                        mangaDao.getMangaSummarybyID(mangaId)
                     } ?: emptyList()
 
                     // Set the result into the MutableStateFlow
                     _readlistSummaries.value = mangaSummaries
                 } else {
                     Log.d("Readlist", "failed")
-                    _readlistSummaries.value = emptyList() // Set empty if failed, you can modify this behavior
+                    _readlistSummaries.value = emptyList()
                 }
             }
         }
@@ -133,8 +139,6 @@ class UserViewModel(private val fireDB: firedb,private val mangaDao: MangaDao) :
                     // Handle error fetching nickname
                     Log.e("UserRegister", "Failed to fetch nickname: ${res.throwable}")
                 }
-//                Log.d("UserRegister-nick","$nickname")
-//                onComplete()
             }
             _signupState.value = result
         }
@@ -159,10 +163,6 @@ class UserViewModel(private val fireDB: firedb,private val mangaDao: MangaDao) :
             }
         }
     }
-
-
-
-
 
 }
 

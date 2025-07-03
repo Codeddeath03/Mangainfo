@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -51,12 +52,13 @@ import com.example.manganese.components.SearchBar
 import com.example.manganese.components.UserViewModel
 import com.example.manganese.components.UserViewModelFactory
 import com.example.manganese.database.DbViewModelFactory
+import com.example.manganese.database.FireDBRepository
 import com.example.manganese.database.dbRepository
 import com.example.manganese.database.dbViewModel
 import com.example.manganese.database.entities.AnimeSummary
-import com.example.manganese.database.firedb
 import com.example.manganese.screens.GridView
 import com.example.manganese.screens.LoginScreen
+import com.example.manganese.screens.MediaDetailContent
 import com.example.manganese.screens.SettingsScreen
 import com.example.manganese.screens.SignUpScreen
 import com.example.manganese.screens.readListScreen
@@ -121,8 +123,8 @@ class MainActivity : ComponentActivity() {
             val dbRepo = dbRepository(mangaDao,bkendService)  // Replace this with your actual instance
             val dbViewModelFactory = DbViewModelFactory(dbRepo)
             val dbViewModel = ViewModelProvider(this, dbViewModelFactory).get(dbViewModel::class.java)
-            val fireDB = firedb()
-            val userViewModelFactory = UserViewModelFactory(fireDB,mangaDao)
+            val fireDB = FireDBRepository(mangaDao)
+            val userViewModelFactory = UserViewModelFactory(fireDB,mangaDao,dbRepo)
             val userViewModel = ViewModelProvider(this, userViewModelFactory).get(UserViewModel::class.java)
 //            dbViewModel.animes.observe(this,{
 //                Log.d("TrendingAnime",it.data.toString())
@@ -176,6 +178,7 @@ fun App(
     var selectedTabIndex by rememberSaveable {
         mutableStateOf(0)
     }
+    val animeRecommendation = viewModel.animeRecommendation.collectAsState()
     Log.d("MangaListScreen", "${mangaList.itemCount}")
     Log.d("MangaListScreen", "${animeList.itemCount}")
     Log.d("MainActivity", "App launched")
@@ -298,8 +301,8 @@ fun App(
                         }
                     }
                     else{
-                    if (mangaList.itemCount > 0) {
-                        MangaMainScreen(mangaList, trendingList = trend_manga){
+                    if (mangaList.itemCount > 0 ) {
+                        MangaMainScreen(mangaList, trendingList = trend_manga, null){
                             //do nothing fn
                             Log.d("MangaListScreen", "Manga ID: $it")
                             navController.navigate("detailScreen/manga/$it")
@@ -334,8 +337,8 @@ fun App(
                         }
                     }
                     else{
-                        if (animeList.itemCount > 0) {
-                            MangaMainScreen(animeList, trendingList = trend_anime){
+                        if (animeList.itemCount > 0 ) {
+                            MangaMainScreen(animeList, trendingList = trend_anime,animeRecommendation){
                                 //do nothing fn
                                 Log.d("AnimeListScreen", "Anime ID: $it")
                                 navController.navigate("detailScreen/anime/$it")
@@ -394,7 +397,33 @@ fun App(
                 val Id = backStackEntry.arguments?.getInt("id") // Or getInt if ID is an integer
                 val contentType = backStackEntry.arguments?.getString("type")
                 if (Id != null) {
-                    DetailScreen(Id = Id,mangaDao,type=contentType, onBackAction = { navController.popBackStack()},viewModel)
+                   // DetailScreen(Id = Id,mangaDao,type=contentType, onBackAction = { navController.popBackStack()},viewModel)
+                    if (contentType == "manga") {
+                        dbViewModel.detailedMangaSearch(Id)
+                        val manga = dbViewModel.mangaDetail.collectAsState()
+                        if (manga.value != null){
+                            MediaDetailContent(item = manga.value!!, viewModel = viewModel){
+                                navController.popBackStack()
+                                dbViewModel.setMangaDetailnull()
+                            }
+                        }else{
+                            CircularProgressIndicator(modifier = Modifier.fillMaxSize())
+                        }
+
+                    }else{
+                        dbViewModel.detailedAnimeSearch(Id)
+                        val anime = dbViewModel.animeDetail.collectAsState()
+                        if(anime.value != null){
+                            MediaDetailContent(item = anime.value!!, viewModel = viewModel){
+                                navController.popBackStack()
+                                dbViewModel.setAnimeDetailnull()
+                            }
+                        }
+                        else{
+                            CircularProgressIndicator(modifier = Modifier.fillMaxSize())
+                        }
+                    }
+
                 } else {
                     Text(
                         text = "Manga/Anime not found",

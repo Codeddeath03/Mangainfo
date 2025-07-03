@@ -2,6 +2,9 @@ package com.example.manganese.database
 
 import android.content.ContentValues.TAG
 import android.util.Log
+import com.example.manganese.MangaDao
+import com.example.manganese.database.entities.Anime
+import com.example.manganese.database.entities.AnimeSummary
 import com.google.firebase.Firebase
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
@@ -12,14 +15,18 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.firestore
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 
 const val db_REF = "users"
 
-class firedb {
+class FireDBRepository(private val mangaDao: MangaDao){
 
     private val user: FirebaseUser?
         get() = Firebase.auth.currentUser
@@ -27,9 +34,10 @@ class firedb {
 
     fun hasUser(): Boolean = user != null
     fun getUserid(): String = user?.uid.orEmpty()
-init {
-   Log.d("firedb initialized","does it have user rn? ${hasUser()}")
-}
+
+    private val _nickname = MutableStateFlow<Resources<String>>(Resources.Loading())
+    val  nickname: StateFlow<Resources<String>> = _nickname.asStateFlow()
+
     private val dbUserREF: DocumentReference?
         get() = user?.uid?.let { uid ->
             Firebase.firestore.collection(db_REF).document(uid)
@@ -58,7 +66,7 @@ init {
     }
 
 
-    fun getUserWatchlist(): Flow<Resources<List<Int>>> = callbackFlow {
+    fun getUserWatchlist(): Flow<Resources<List<AnimeSummary>>> = callbackFlow {
         val ref = dbUserREF
         if (ref == null) {
             Log.d("fire db watchlist","User not logged in")
@@ -74,19 +82,19 @@ init {
                 trySend(Resources.Error(error)).isSuccess
                 return@addSnapshotListener
             }
-
-//            val response = if (snapshot != null && snapshot.exists()) {
-//                val map = snapshot.data?.get("watchlist") as? Map<String, Any> ?: emptyMap()
-//                val keys = map.keys.mapNotNull { it.toIntOrNull() }
-//                Resources.Success(keys)
-//            } else {
-//                Resources.Error(error ?: Exception("Snapshot is null"))
-//            }
-//            trySend(response).isSuccess
             if (snapshot != null && snapshot.exists()) {
                 val map = snapshot.data?.get("watchlist") as? Map<String, Any> ?: emptyMap()
-                val keys = map.keys.mapNotNull { it.toIntOrNull() }
-                trySend(Resources.Success(keys)).isSuccess
+                val ids = map.keys.mapNotNull { it.toIntOrNull() }
+                launch {
+                    try {
+                        val animeSummaries = ids.let { ids -> mangaDao.getAnimeSummariesByIds(ids) }
+                        trySend(Resources.Success(animeSummaries)).isSuccess
+                        Log.d("WatchlistFireDB", "Successfully converted ${animeSummaries.size} IDs to AnimeSummary objects")
+                    } catch (e: Exception) {
+                        Log.e("WatchlistFireDB", "Error converting IDs to AnimeSummary", e)
+                        trySend(Resources.Error(e)).isSuccess
+                    }
+                }
             } else {
                 // Document does not exist, treat as empty watchlist instead of error
                 trySend(Resources.Success(emptyList())).isSuccess
@@ -112,14 +120,6 @@ init {
                 trySend(Resources.Error(error)).isSuccess
                 return@addSnapshotListener
             }
-//            val response = if (snapshot != null && snapshot.exists()) {
-//                val map = snapshot.data?.get("readlist") as? Map<String, Any> ?: emptyMap()
-//                val keys = map.keys.mapNotNull { it.toIntOrNull() }
-//                Resources.Success(keys)
-//            } else {
-//                Resources.Error(error ?: Exception("Snapshot is null"))
-//            }
-//            trySend(response).isSuccess
             if (snapshot != null && snapshot.exists()) {
                 val map = snapshot.data?.get("readlist") as? Map<String, Any> ?: emptyMap()
                 val keys = map.keys.mapNotNull { it.toIntOrNull() }
@@ -163,16 +163,12 @@ init {
         return try {
             val update = mapOf("watchlist.$animeId" to animeTitle)
             ref.update(update).await()
+
             Resources.Success(Unit)
         } catch (e: Exception) {
             Resources.Error(e)
         }
     }
-
-
-
-
-
     suspend fun removeFromWatchlist(animeId: Int): Resources<Unit> {
         val ref = dbUserREF ?: return Resources.Error(Exception("User not logged in"))
         return try {
@@ -206,6 +202,10 @@ init {
         } catch (e: Exception) {
             Resources.Error(e)
         }
+    }
+
+    init {
+        Log.d("firedb initialized","does it have user rn? ${hasUser()}")
     }
 }
 
